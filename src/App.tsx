@@ -1,11 +1,15 @@
 import './App.css'
+import Navbar from './componentes/organismos/Navbar'
+import Footer from './componentes/organismos/Footer'
 
 function App() {
 
   return (
-    <div className="container mt-4">
-      <h1>NutriVida</h1>
-    </div>
+    <>
+      <Navbar cantidadReserva={0} />
+
+      <Footer />
+    </>
   )
 }
 
