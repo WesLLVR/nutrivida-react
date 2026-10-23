@@ -6,7 +6,7 @@ import {
     actualizarServicio,
     eliminarServicio,
     filtrarServicios
-} from "../datos/Servicios";
+} from "../datos/servicios";
 
 test("listarServicios devuelve los 6 servicios iniciales", () => {
     const lista = listarServicios();
