@@ -11,6 +11,9 @@ import Nosotros from './paginas/Nosotros'
 import Servicios from './paginas/Servicios'
 import DetalleServicio from './paginas/DetalleServicio'
 import Contacto from './paginas/Contacto'
+import Blog from './paginas/Blog'
+import DetalleBlog from './paginas/DetalleBlog'
+import AdminUsuarios from './paginas/AdminUsuarios'
 
 function App() {
 
@@ -32,6 +35,9 @@ function App() {
         <Route path="/Admin/servicios" element={<AdminServicios />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:id" element={<DetalleBlog />} />
+        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
       </Routes>
 
       <Footer />
