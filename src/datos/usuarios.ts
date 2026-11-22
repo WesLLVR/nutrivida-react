@@ -51,6 +51,8 @@ export const regiones: Region[] = [
     { nombre: "Los Lagos", comunas: ["Puerto Montt", "Osorno", "Castro"] }
 ];
 
+export const roles = ["ADMINISTRADOR", "NUTRICIONISTA", "PACIENTE"];
+
 export function listarUsuarios(): Usuario[] {
     return [...usuarios];
 }
