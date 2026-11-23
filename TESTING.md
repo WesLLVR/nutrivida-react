@@ -45,119 +45,147 @@ Ejemplo (`AdminServicios.test.tsx`, prueba DELETE):
 
 ```tsx
 const confirmar = vi.spyOn(window, "confirm").mockReturnValue(true);   // preparación
-mostrarAdmin();
+await mostrarAdmin();
 fireEvent.click(screen.getAllByText("Eliminar")[4]);                   // acción
 expect(confirmar).toHaveBeenCalled();                                   // comprobación
-expect(screen.queryByText("Antropometría completa")).toBeNull();
+await waitFor(() => expect(eliminarServicio).toHaveBeenCalledWith(5));
 ```
+
+Como las páginas ahora piden los datos al backend, en las pruebas no se llama a la API real: se reemplaza el archivo de `src/api` con `vi.mock` y se decide qué responde. Por eso esas pruebas son `async` y usan `findBy...` o `waitFor`, que esperan a que la respuesta llegue a la pantalla.
 
 ## 4. Mocks y espías utilizados
 
 | Herramienta | Dónde | Para qué |
 |---|---|---|
-| `vi.fn()` | Boton, FormularioPago | Comprobar que el componente llama a la función recibida por props y con qué valor |
-| `vi.spyOn(window, "alert")` | FormularioContacto, AdminServicios, App | Evitar que aparezca el alert y comprobar el mensaje de éxito |
+| `vi.fn()` | Boton, ListaServicios, FormularioPago, FormularioCita, TablaCitas, Navbar | Comprobar que el componente llama a la función recibida por props y con qué valor |
+| `vi.mock("../api/...")` | Servicios, DetalleServicio, AdminServicios, FormularioLogin, FormularioContacto, App | Reemplazar las llamadas al backend por respuestas fijas, así la prueba no depende de que los microservicios estén encendidos |
+| `vi.mocked(funcion).mockResolvedValue(...)` | AdminServicios, FormularioLogin | Decidir qué responde la API en cada prueba (respuesta correcta o error) |
+| `vi.stubGlobal("fetch", ...)` | cliente | Revisar qué envía `peticion` al backend (URL y encabezado `Authorization`) y qué hace con un 401 |
+| `vi.spyOn(window, "alert")` | FormularioContacto, AdminServicios | Evitar que aparezca el alert y comprobar el mensaje de éxito |
 | `vi.spyOn(window, "confirm")` | AdminServicios | Simular que el usuario acepta la eliminación |
 | `vi.useFakeTimers()` y `vi.setSystemTime()` | FormularioPago | Fijar la fecha de hoy para que la validación de tarjeta vencida dé siempre el mismo resultado |
-| `vi.mock(...)` | Contacto | Reemplazar el formulario para probar solo la estructura responsiva de la página |
+| `localStorage` | sesion, cliente, App, reserva | Guardar una sesión de prueba con un token creado en `datosPrueba.ts` (vigente o vencido) y una reserva guardada |
 
-Después de cada espía se llama a `mockRestore()` y después de fijar la fecha se llama a `vi.useRealTimers()`.
+Después de cada espía se llama a `mockRestore()`, después de `stubGlobal` se llama a `vi.unstubAllGlobals()` y antes de cada prueba de sesión se limpia `localStorage`.
 
 ## 5. Casos evaluados
 
 | N° | Archivo | Prueba | Tipo | Resultado |
 |---|---|---|---|---|
-| 1 | `datosServicios.test.ts` | listarServicios devuelve los 6 servicios iniciales | CRUD – Leer | Aprobada |
-| 2 | `datosServicios.test.ts` | crearServicio agrega un servicio nuevo a la lista | CRUD – Crear | Aprobada |
-| 3 | `datosServicios.test.ts` | actualizarServicio cambia los datos del servicio | CRUD – Actualizar | Aprobada |
-| 4 | `datosServicios.test.ts` | eliminarServicio quita el servicio de la lista | CRUD – Eliminar | Aprobada |
-| 5 | `datosServicios.test.ts` | filtrarServicios encuentra servicios por nombre | Filtro de búsqueda | Aprobada |
-| 6 | `validaciones.test.ts` | correoValido acepta un correo correcto y rechaza los mal escritos | Validación | Aprobada |
-| 7 | `validaciones.test.ts` | tarjetaVencida compara la fecha de la tarjeta con la fecha de hoy | Validación (pago) | Aprobada |
-| 8 | `reserva.test.ts` | calcularTotal multiplica precio por cantidad | Lógica de la reserva | Aprobada |
-| 9 | `boletas.test.ts` | crearBoleta arma el detalle, separa el IVA y oculta la tarjeta | Lógica de la boleta | Aprobada |
-| 10 | `Boton.test.tsx` | el botón muestra su texto y llama a la función al hacer click | Propiedades y eventos | Aprobada |
-| 11 | `CardServicio.test.tsx` | la tarjeta muestra los datos recibidos por props | Propiedades | Aprobada |
-| 12 | `ListaServicios.test.tsx` | muestra una tarjeta por cada servicio de la lista | Listas | Aprobada |
-| 13 | `ListaServicios.test.tsx` | muestra un mensaje cuando la lista está vacía | Comportamiento condicional | Aprobada |
-| 14 | `FormularioContacto.test.tsx` | muestra un error cuando el nombre está vacío | Validación | Aprobada |
-| 15 | `FormularioContacto.test.tsx` | con datos correctos no muestra errores y llama a alert | Validación y estado (espía) | Aprobada |
-| 16 | `FormularioLogin.test.tsx` | muestra un error si la contraseña no coincide | Validación | Aprobada |
-| 17 | `FormularioRegistro.test.tsx` | muestra un error cuando el dígito verificador del RUN es incorrecto | Validación | Aprobada |
-| 18 | `Servicios.test.tsx` | al escribir en el buscador solo quedan los servicios que coinciden | Filtro en la interfaz | Aprobada |
-| 19 | `Servicios.test.tsx` | al elegir un tipo solo se muestran servicios de ese tipo | Filtro en la interfaz | Aprobada |
-| 20 | `DetalleServicio.test.tsx` | muestra el servicio que corresponde al código de la URL | Ruta con parámetro | Aprobada |
-| 21 | `Reserva.test.tsx` | muestra los servicios agregados y el total | Listas y propiedades | Aprobada |
-| 22 | `FormularioPago.test.tsx` | muestra un error si la tarjeta está vencida | Validación (pago, mock de fecha) | Aprobada |
-| 23 | `FormularioPago.test.tsx` | el campo cuotas solo aparece con tarjeta de crédito | Comportamiento condicional | Aprobada |
-| 24 | `FormularioPago.test.tsx` | con datos correctos envía los datos del pago sin el CVV | Eventos y estado (espía) | Aprobada |
-| 25 | `Boleta.test.tsx` | muestra los datos de la boleta recibida por props | Propiedades | Aprobada |
-| 26 | `AdminServicios.test.tsx` | CREATE: un servicio creado en el formulario aparece en la tabla | CRUD – Crear | Aprobada |
-| 27 | `AdminServicios.test.tsx` | UPDATE: al editar un servicio la tabla muestra el nuevo precio | CRUD – Actualizar | Aprobada |
-| 28 | `AdminServicios.test.tsx` | DELETE: al confirmar, el servicio desaparece de la tabla | CRUD – Eliminar (espía) | Aprobada |
-| 29 | `Contacto.test.tsx` | debe tener las clases responsivas col-12, col-md-8 y col-lg-6 | Responsividad (mock) | Aprobada |
-| 30 | `App.test.tsx` | flujo de compra: reserva, pago y boleta | Flujo completo | Aprobada |
+| 1 | `datosServicios.test.tsx` | filtrarServicios encuentra servicios por nombre sin importar mayúsculas | Filtro de búsqueda | Aprobada |
+| 2 | `datosServicios.test.tsx` | filtrarServicios combina el texto con el tipo elegido | Filtro de búsqueda | Aprobada |
+| 3 | `datosServicios.test.tsx` | formatearPrecio y formatearFecha muestran los datos al estilo chileno | Formato | Aprobada |
+| 4 | `datosServicios.test.tsx` | imagenPorTipo entrega la foto que corresponde al tipo | Lógica | Aprobada |
+| 5 | `validaciones.test.ts` | correoValido acepta un correo correcto y rechaza los mal escritos | Validación | Aprobada |
+| 6 | `validaciones.test.ts` | tarjetaVencida compara la fecha de la tarjeta con la fecha de hoy | Validación (pago) | Aprobada |
+| 7 | `reserva.test.ts` | calcularTotal multiplica precio por cantidad | Lógica de la reserva | Aprobada |
+| 8 | `reserva.test.ts` | agregarItem suma la cantidad si el servicio ya estaba en la reserva | Lógica de la reserva | Aprobada |
+| 9 | `sesion.test.ts` | la sesión guardada se mantiene al recargar mientras el token esté vigente | Sesión persistente | Aprobada |
+| 10 | `sesion.test.ts` | si el token expiró, la sesión se borra y no se puede usar | Sesión / JWT | Aprobada |
+| 11 | `sesion.test.ts` | tokenPorVencer avisa cuando quedan menos de 10 minutos | Renovación de token | Aprobada |
+| 12 | `sesion.test.ts` | rutaInicio lleva a cada rol a su pantalla principal | Roles | Aprobada |
+| 13 | `cliente.test.ts` | peticion envía el token JWT en el encabezado Authorization | Integración API (mock de fetch) | Aprobada |
+| 14 | `cliente.test.ts` | si el backend responde 401 se borra la sesión y se muestra su mensaje | Integración API (mock de fetch) | Aprobada |
+| 15 | `Boton.test.tsx` | el botón muestra su texto y llama a la función al hacer click | Propiedades y eventos | Aprobada |
+| 16 | `CardServicio.test.tsx` | la tarjeta muestra los datos recibidos por props | Propiedades | Aprobada |
+| 17 | `ListaServicios.test.tsx` | muestra una tarjeta por cada servicio y al agregar entrega el servicio completo | Listas y eventos | Aprobada |
+| 18 | `ListaServicios.test.tsx` | muestra un mensaje cuando la lista está vacía | Comportamiento condicional | Aprobada |
+| 19 | `Navbar.test.tsx` | el nutricionista ve su agenda y fichas, pero no el panel ni la reserva | Menú por rol | Aprobada |
+| 20 | `Navbar.test.tsx` | sin sesión el menú muestra Ingresar y no muestra opciones privadas | Menú por rol | Aprobada |
+| 21 | `FormularioContacto.test.tsx` | muestra un error cuando el nombre está vacío | Validación | Aprobada |
+| 22 | `FormularioContacto.test.tsx` | con datos correctos envía el mensaje a la API y limpia el formulario | Integración API (vi.mock) | Aprobada |
+| 23 | `FormularioLogin.test.tsx` | muestra el error que responde el backend si la contraseña no coincide | Validación (vi.mock) | Aprobada |
+| 24 | `FormularioLogin.test.tsx` | con datos correctos entrega la sesión con el token al componente padre | Inicio de sesión (vi.mock) | Aprobada |
+| 25 | `FormularioRegistro.test.tsx` | muestra un error cuando el dígito verificador del RUN es incorrecto | Validación | Aprobada |
+| 26 | `FormularioCita.test.tsx` | no permite pedir una cita en una fecha pasada | Validación | Aprobada |
+| 27 | `FormularioCita.test.tsx` | con datos correctos entrega el id del nutricionista elegido | Eventos y estado | Aprobada |
+| 28 | `TablaCitas.test.tsx` | el botón Confirmar solo aparece en las citas pendientes | Comportamiento condicional | Aprobada |
+| 29 | `TablaCitas.test.tsx` | si no se entrega la acción, el botón no se muestra | Comportamiento condicional | Aprobada |
+| 30 | `Servicios.test.tsx` | al escribir en el buscador solo quedan los servicios que coinciden | Filtro en la interfaz (vi.mock) | Aprobada |
+| 31 | `Servicios.test.tsx` | al elegir un tipo solo se muestran servicios de ese tipo | Filtro en la interfaz (vi.mock) | Aprobada |
+| 32 | `DetalleServicio.test.tsx` | muestra el servicio que corresponde al código de la URL | Ruta con parámetro (vi.mock) | Aprobada |
+| 33 | `Reserva.test.tsx` | muestra los servicios agregados y el total | Listas y propiedades | Aprobada |
+| 34 | `FormularioPago.test.tsx` | muestra un error si la tarjeta está vencida | Validación (mock de fecha) | Aprobada |
+| 35 | `FormularioPago.test.tsx` | el campo cuotas solo aparece con tarjeta de crédito | Comportamiento condicional | Aprobada |
+| 36 | `FormularioPago.test.tsx` | con datos correctos envía los datos del pago sin el CVV | Eventos y estado (espía) | Aprobada |
+| 37 | `Boleta.test.tsx` | muestra los datos de la boleta que entregó el backend | Propiedades | Aprobada |
+| 38 | `AdminServicios.test.tsx` | CREATE: el formulario envía el servicio nuevo a la API | CRUD – Crear (vi.mock) | Aprobada |
+| 39 | `AdminServicios.test.tsx` | UPDATE: al editar se envía el nuevo precio con el id del servicio | CRUD – Actualizar (vi.mock) | Aprobada |
+| 40 | `AdminServicios.test.tsx` | DELETE: al confirmar se pide a la API eliminar el servicio | CRUD – Eliminar (vi.mock) | Aprobada |
+| 41 | `Contacto.test.tsx` | debe tener las clases responsivas col-12, col-md-8 y col-lg-6 | Responsividad (mock) | Aprobada |
+| 42 | `App.test.tsx` | sin sesión, el panel de administración redirige al login | Rutas protegidas | Aprobada |
+| 43 | `App.test.tsx` | un paciente que entra a /admin ve la página de acceso restringido | Restricción por rol | Aprobada |
+| 44 | `App.test.tsx` | el administrador entra al panel y ve el enlace Admin en el menú | Restricción por rol | Aprobada |
+| 45 | `App.test.tsx` | la sesión guardada se recupera al recargar y muestra el nombre del usuario | Sesión persistente | Aprobada |
+| 46 | `reserva.test.ts` | la reserva guardada se recupera al recargar la página | Reserva persistente | Aprobada |
+| 47 | `App.test.tsx` | una dirección que no existe muestra la página no encontrada | Rutas | Aprobada |
+| 48 | `citas.test.ts` | horasDeAtencion arma las horas según el horario del nutricionista | Lógica de citas | Aprobada |
 
-Resumen por requisito de la rúbrica:
+Resumen por requisito:
 
 | Requisito | Pruebas |
 |---|---|
-| Renderizado y propiedades | 10, 11, 21, 25 |
-| Listas con todos los elementos | 1, 12, 21 |
-| Eventos | 10, 24, 30 |
-| Validaciones (error solo cuando corresponde) | 6, 7, 14, 15, 16, 17, 22 |
-| Comportamiento condicional | 13, 23 |
-| CRUD | Crear: 2, 26. Leer: 1. Actualizar: 3, 27. Eliminar: 4, 28 |
-| Filtros de búsqueda | 5, 18, 19 |
-| Rutas con parámetro | 20 |
-| Responsividad | 29 |
-| Flujo completo (reserva, pago y boleta) | 30 |
+| Renderizado y propiedades | 15, 16, 33, 37 |
+| Listas | 17, 33 |
+| Eventos | 15, 17, 27, 36 |
+| Validaciones | 5, 6, 21, 23, 25, 26, 34 |
+| Horas de atención según el nutricionista | 48 |
+| Comportamiento condicional | 18, 28, 29, 35 |
+| CRUD contra la API | Crear: 38. Actualizar: 39. Eliminar: 40 |
+| Filtros de búsqueda | 1, 2, 30, 31 |
+| Ruta con parámetro | 32 |
+| Ruta que no existe | 47 |
+| Integración con el backend (token en cada petición, manejo de 401) | 13, 14, 22, 24 |
+| Sesión que se mantiene al recargar y expira con el token | 9, 10, 11, 45 |
+| Reserva que se mantiene al recargar | 46 |
+| Restricción de acceso por rol | 12, 19, 20, 42, 43, 44 |
+| Responsividad | 41 |
 
 ## 6. Resultados
 
 ```
- Test Files  18 passed (18)
-      Tests  30 passed (30)
+ Test Files  23 passed (23)
+      Tests  48 passed (48)
 ```
 
 ## 7. Reporte de cobertura
 
 Generado con `npm run coverage`. El reporte completo en HTML queda en `coverage/index.html`.
 
-| Total | Sentencias | Ramas | Funciones | Líneas |
-|---|---|---|---|---|
-| Proyecto | 63,39 % | 58,93 % | 69,29 % | 63,28 % |
-
 | Carpeta | Cobertura de líneas |
 |---|---|
-| (raíz) | 84,62 % |
-| componentes/atomos | 100 % |
-| componentes/moleculas | 88,89 % |
-| componentes/organismos | 53,19 % |
-| datos | 72,22 % |
-| paginas | 64,38 % |
+| Proyecto completo | 44,72 % |
+| datos | 87,09 % |
 | validaciones | 87,5 % |
+| api | 28 % |
+| paginas | 25 % |
+
+La cobertura bajó respecto de la entrega anterior porque se agregaron páginas nuevas (citas, fichas, agenda, mensajes y ventas) que dependen del backend. Esas pantallas se probaron conectadas a los microservicios reales, revisando cada flujo en el navegador (ver sección 8).
 
 ### Archivos incluidos y excluidos
 
 - **Incluidos:** todos los archivos `.ts` y `.tsx` dentro de `src`.
 - **Excluidos:** `src/main.tsx` (solo monta la aplicación en el navegador) y `src/test/**` (son las pruebas).
 
-## 8. Comportamientos pendientes
+## 8. Pruebas manuales con el backend encendido
 
-Estas partes no tienen prueba o tienen cobertura parcial:
+Con Eureka, los seis microservicios y el gateway corriendo, se revisó en el navegador:
 
-- **Páginas informativas y de navegación** (`Inicio`, `Nosotros`, `Blog`, `DetalleBlog`, `Admin`, `Login`, `Registro`): solo muestran contenido o contienen un organismo que se prueba por separado.
-- **AdminUsuarios:** no se prueba el cambio de estado Activo / Inactivo.
-- **FormularioPago:** se prueban la tarjeta vencida, las cuotas y el pago correcto; faltan los mensajes de campos vacíos, teléfono, número de tarjeta con menos de 16 dígitos, titular con números, formato MM/AA y CVV.
-- **FormularioRegistro:** se prueba el RUN incorrecto, pero no cada campo obligatorio, la carga de comunas ni el registro completo.
-- **FormularioServicio:** se prueban crear y editar; faltan los mensajes de cada campo vacío, el código con mal formato y el código repetido.
-- **FormularioLogin:** se prueba la contraseña incorrecta; faltan el ingreso correcto, la cuenta desactivada y la navegación después de ingresar.
-- **FormularioContacto:** faltan el correo inválido, el mensaje vacío y el límite de 500 caracteres.
-- **Eliminar con confirmación cancelada:** no se prueba qué pasa si el usuario presiona Cancelar.
-- **Navegación real del navegador:** no se prueba la recarga de página ni el botón Atrás. Al recargar, la reserva y la boleta se pierden porque se guardan en el estado de la aplicación.
-- **Responsividad visual:** la prueba revisa que existan las clases de Bootstrap, pero no cómo se ve. Eso se revisó a mano con las herramientas de desarrollo (F12 y Ctrl + Shift + M) en celular (375 px), tablet (768 px) y computador (1280 px).
+| Flujo | Resultado esperado | Resultado |
+|---|---|---|
+| Entrar a `/admin` sin sesión | Redirige a `/login` | Correcto |
+| Login como administrador | Entra a `/admin` y ve los usuarios cargados desde usuarioMS | Correcto |
+| Recargar la página con sesión iniciada | Sigue con la sesión y en la misma página | Correcto |
+| Paciente entra a `/admin` | Muestra "Acceso restringido" | Correcto |
+| Paciente compra dos servicios | ventaMS genera la boleta con número correlativo | Correcto |
+| Paciente pide una cita | Aparece en la tabla como PENDIENTE | Correcto |
+| Paciente pide la misma hora otra vez | El backend responde "El nutricionista ya tiene una cita en ese horario" | Correcto |
+| Nutricionista confirma la cita | Cambia a CONFIRMADA | Correcto |
+| Nutricionista entra a `/admin/usuarios` | Muestra "Acceso restringido" | Correcto |
+| Mensaje desde Contacto sin sesión | contactoMS lo guarda y aparece en Admin > Mensajes | Correcto |
 
-### Cobertura y calidad
+## 9. Comportamientos pendientes
 
-Un porcentaje alto de cobertura indica que una línea se ejecutó durante las pruebas, no que su resultado se haya comprobado. Por eso cada prueba incluye al menos un `expect` con el valor esperado. Por ejemplo, `boletas.ts` tiene 100 % de líneas cubiertas y además la prueba comprueba que el neto más el IVA sea igual al total.
+- **Páginas que dependen del backend** (`MisCitas`, `MiProgreso`, `Agenda`, `FichasPacientes`, `AdminCitas`, `AdminMensajes`, `AdminVentas`, `AdminUsuarios`): se revisaron a mano con el backend encendido, pero no tienen prueba automática.
+- **Renovación automática del token:** se prueba la función `tokenPorVencer`, pero no el intervalo de `App.tsx` que llama a `/auth/renovar`.
+- **FormularioRegistro, FormularioUsuario y FormularioFicha:** faltan pruebas de cada campo obligatorio.
