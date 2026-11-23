@@ -10,7 +10,7 @@ function BotonEnlace({ ruta, texto, color }: BotonEnlaceProps) {
     return (
         <Link
             to={ruta}
-            className={"btn btn-" + color + " me-1"}
+            className={"btn btn-sm btn-" + color + " me-1"}
         >
             {texto}
         </Link>
