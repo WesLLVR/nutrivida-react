@@ -3,16 +3,23 @@ import { useNavigate } from "react-router-dom";
 import CampoFormulario from "../moleculas/CampoFormulario";
 import MensajeError from "../atomos/MensajeError";
 import { correoValido } from "../../validaciones/validaciones";
-import { buscarUsuarioPorCorreo } from "../../datos/usuarios";
+import { iniciarSesion } from "../../api/usuarios";
+import { rutaInicio } from "../../datos/sesion";
+import type { Sesion } from "../../datos/sesion";
 
-function FormularioLogin() {
+interface FormularioLoginProps {
+    alIniciar: (sesion: Sesion) => void;
+}
+
+function FormularioLogin({ alIniciar }: FormularioLoginProps) {
     const [correo, setCorreo] = useState("");
     const [clave, setClave] = useState("");
     const [error, setError] = useState("");
+    const [enviando, setEnviando] = useState(false);
 
     const navegar = useNavigate();
 
-    const manejarEnvio = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const manejarEnvio = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (correo.trim() === "") {
@@ -32,25 +39,16 @@ function FormularioLogin() {
             return;
         }
 
-        const usuario = buscarUsuarioPorCorreo(correo);
-
-        if (usuario === undefined || usuario.clave !== clave) {
-            setError("El correo o la contraseña no coinciden");
-            return;
+        setEnviando(true);
+        try {
+            const sesion = await iniciarSesion(correo.trim(), clave);
+            setError("");
+            alIniciar(sesion);
+            navegar(rutaInicio(sesion.rol));
+        } catch (err) {
+            setError((err as Error).message);
         }
-        if (usuario.estado === "Inactivo") {
-            setError("Tu cuenta está desactivada");
-            return;
-        }
-
-        setError("");
-        alert("Bienvenido/a " + usuario.nombre);
-
-        if (usuario.tipo === "Administrador") {
-            navegar("/admin");
-        } else {
-            navegar("/");
-        }
+        setEnviando(false);
     };
 
     return (
@@ -74,8 +72,8 @@ function FormularioLogin() {
 
             <MensajeError mensaje={error} />
 
-            <button type="submit" className="btn btn-success">
-                Ingresar
+            <button type="submit" className="btn btn-success" disabled={enviando}>
+                {enviando ? "Ingresando..." : "Ingresar"}
             </button>
         </form>
     );

@@ -3,14 +3,16 @@ import { useNavigate } from "react-router-dom";
 import CampoFormulario from "../moleculas/CampoFormulario";
 import CampoSelect from "../moleculas/CampoSelect";
 import MensajeError from "../atomos/MensajeError";
-import { correoValido, runSinPuntos, runValido } from "../../validaciones/validaciones";
-import { regiones, obtenerComunas, crearUsuario, buscarUsuarioPorRun } from "../../datos/usuarios";
+import { correoValido, runSinPuntos, runValido, telefonoValido } from "../../validaciones/validaciones";
+import { regiones, obtenerComunas } from "../../datos/usuarios";
+import { registrarPaciente } from "../../api/usuarios";
 
 function FormularioRegistro() {
     const [run, setRun] = useState("");
     const [nombre, setNombre] = useState("");
     const [apellidos, setApellidos] = useState("");
     const [correo, setCorreo] = useState("");
+    const [telefono, setTelefono] = useState("");
     const [clave, setClave] = useState("");
     const [region, setRegion] = useState("");
     const [comuna, setComuna] = useState("");
@@ -26,7 +28,7 @@ function FormularioRegistro() {
         setComuna("");
     };
 
-    const manejarEnvio = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const manejarEnvio = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (run.trim() === "") {
@@ -41,10 +43,6 @@ function FormularioRegistro() {
             setError("El dígito verificador del RUN no es correcto");
             return;
         }
-        if (buscarUsuarioPorRun(run.trim().toUpperCase()) !== undefined) {
-            setError("Ya existe una cuenta con ese RUN");
-            return;
-        }
         if (nombre.trim() === "") {
             setError("El nombre es obligatorio");
             return;
@@ -55,6 +53,10 @@ function FormularioRegistro() {
         }
         if (!correoValido(correo)) {
             setError("Ingrese un correo válido");
+            return;
+        }
+        if (telefono.trim() !== "" && !telefonoValido(telefono)) {
+            setError("El teléfono debe tener 9 dígitos y comenzar con 9");
             return;
         }
         if (clave.length < 4 || clave.length > 10) {
@@ -74,22 +76,24 @@ function FormularioRegistro() {
             return;
         }
 
-        crearUsuario({
-            run: run.trim().toUpperCase(),
-            nombre: nombre.trim(),
-            apellidos: apellidos.trim(),
-            correo: correo.trim(),
-            clave: clave,
-            tipo: "Paciente",
-            region: region,
-            comuna: comuna,
-            direccion: direccion.trim(),
-            estado: "Activo"
-        });
-
-        setError("");
-        alert("Cuenta creada correctamente");
-        navegar("/login");
+        try {
+            await registrarPaciente({
+                run: run.trim().toUpperCase(),
+                nombre: nombre.trim(),
+                apellidos: apellidos.trim(),
+                correo: correo.trim(),
+                clave: clave,
+                telefono: telefono.trim(),
+                comuna: comuna,
+                direccion: direccion.trim(),
+                rol: "PACIENTE"
+            });
+            setError("");
+            alert("Cuenta creada correctamente. Ahora puedes iniciar sesión");
+            navegar("/login");
+        } catch (err) {
+            setError((err as Error).message);
+        }
     };
 
     return (
@@ -115,6 +119,9 @@ function FormularioRegistro() {
                 </div>
                 <div className="col-12 col-md-6">
                     <CampoFormulario etiqueta="Dirección" tipo="text" nombre="direccion" valor={direccion} alCambiar={setDireccion} />
+                </div>
+                <div className="col-12 col-md-6">
+                    <CampoFormulario etiqueta="Teléfono (opcional)" tipo="text" nombre="telefono" valor={telefono} alCambiar={setTelefono} />
                 </div>
                 <div className="col-12 col-md-6">
                     <CampoFormulario etiqueta="Contraseña" tipo="password" nombre="clave" valor={clave} alCambiar={setClave} />
