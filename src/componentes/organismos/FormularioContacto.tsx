@@ -1,7 +1,9 @@
 import { useState } from "react";
 import CampoFormulario from "../moleculas/CampoFormulario";
+import CampoArea from "../moleculas/CampoArea";
 import MensajeError from "../atomos/MensajeError";
 import { correoValido } from "../../validaciones/validaciones";
+import { enviarMensaje } from "../../api/contactos";
 
 function FormularioContacto() {
     const [nombre, setNombre] = useState("");
@@ -10,7 +12,7 @@ function FormularioContacto() {
 
     const [error, setError] = useState("");
 
-    const manejarEnvio = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const manejarEnvio = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (nombre.trim() === "") {
@@ -34,11 +36,16 @@ function FormularioContacto() {
             return;
         }
 
-        setError("");
-        alert("Gracias " + nombre + ", recibimos tu mensaje");
-        setNombre("");
-        setCorreo("");
-        setMensaje("");
+        try {
+            await enviarMensaje(nombre.trim(), correo.trim(), mensaje.trim());
+            setError("");
+            alert("Gracias " + nombre + ", recibimos tu mensaje");
+            setNombre("");
+            setCorreo("");
+            setMensaje("");
+        } catch (err) {
+            setError((err as Error).message);
+        }
     };
 
     return (
@@ -60,9 +67,8 @@ function FormularioContacto() {
                 alCambiar={setCorreo}
             />
 
-            <CampoFormulario
+            <CampoArea
                 etiqueta="Mensaje"
-                tipo="text"
                 nombre="mensaje"
                 valor={mensaje}
                 alCambiar={setMensaje}

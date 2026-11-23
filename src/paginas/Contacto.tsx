@@ -2,7 +2,7 @@ import FormularioContacto from "../componentes/organismos/FormularioContacto";
 
 function Contacto() {
     return (
-        <div className="container mt-4">
+        <div className="container">
 
             <div className="row justify-content-center">
 
