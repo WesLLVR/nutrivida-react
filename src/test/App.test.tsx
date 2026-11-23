@@ -1,41 +1,66 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { test, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { test, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { guardarSesion } from "../datos/sesion";
+import { crearSesion, serviciosPrueba } from "./datosPrueba";
+
+vi.mock("../api/catalogo", () => ({
+    listarServicios: vi.fn().mockResolvedValue(serviciosPrueba),
+    listarNutricionistas: vi.fn().mockResolvedValue([])
+}));
 
 import App from "../App";
 
-test("flujo de compra: reserva, pago y boleta", () => {
-    const alerta = vi.spyOn(window, "alert").mockImplementation(() => {});
-
+function mostrarEn(ruta: string) {
     render(
-        <MemoryRouter initialEntries={["/servicios"]}>
+        <MemoryRouter initialEntries={[ruta]}>
             <App />
         </MemoryRouter>
     );
+}
 
-    fireEvent.click(screen.getAllByText("Agregar")[0]);
-    fireEvent.click(screen.getByText("Mi reserva"));
-    fireEvent.click(screen.getByText("Ir a pagar"));
+beforeEach(() => {
+    localStorage.clear();
+});
 
-    const escribir = (etiqueta: string, valor: string) => {
-        fireEvent.change(screen.getByLabelText(etiqueta), { target: { value: valor } });
-    };
-    escribir("Nombre completo", "Lucas Valderrama");
-    escribir("RUN (sin puntos ni guion)", "212345679");
-    escribir("Correo", "lucas@correo.cl");
-    escribir("Teléfono (9 dígitos)", "912345678");
-    escribir("Tipo de tarjeta", "Débito");
-    escribir("Número de tarjeta", "4111111111111111");
-    escribir("Nombre del titular", "Lucas Valderrama");
-    escribir("Vencimiento (MM/AA)", "12/30");
-    escribir("CVV", "123");
-    fireEvent.click(screen.getByRole("button", { name: "Pagar" }));
+test("sin sesión, el panel de administración redirige al login", () => {
+    mostrarEn("/admin");
 
-    expect(screen.getByText("Boleta N° 1001")).toBeInTheDocument();
-    expect(screen.getByText("Total: $35.000")).toBeInTheDocument();
-    expect(screen.getByText("Mi reserva").querySelector(".badge")).toHaveTextContent("0");
+    expect(screen.getByRole("heading", { name: "Iniciar sesión" })).toBeInTheDocument();
+});
 
-    alerta.mockRestore();
+test("un paciente que entra a /admin ve la página de acceso restringido", () => {
+    guardarSesion(crearSesion("PACIENTE"));
+
+    mostrarEn("/admin");
+
+    expect(screen.getByText("Acceso restringido")).toBeInTheDocument();
+    expect(screen.queryByText("Admin")).toBeNull();
+});
+
+test("el administrador entra al panel y ve el enlace Admin en el menú", () => {
+    guardarSesion(crearSesion("ADMINISTRADOR"));
+
+    mostrarEn("/admin");
+
+    expect(screen.getByText("Panel de administración")).toBeInTheDocument();
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+});
+
+test("la sesión guardada se recupera al recargar y muestra el nombre del usuario", async () => {
+    guardarSesion(crearSesion("PACIENTE"));
+
+    mostrarEn("/");
+
+    expect(screen.getByText("Hola, Matías")).toBeInTheDocument();
+    expect(screen.getByText("Mis citas")).toBeInTheDocument();
+    expect(await screen.findByText("Taller de alimentación saludable")).toBeInTheDocument();
+});
+
+test("una dirección que no existe muestra la página no encontrada", () => {
+    mostrarEn("/pagina-inventada");
+
+    expect(screen.getByText("Página no encontrada")).toBeInTheDocument();
 });
