@@ -14,7 +14,7 @@ interface ReservaProps {
 function Reserva({ items, alQuitar, alVaciar }: ReservaProps) {
     if (items.length === 0) {
         return (
-            <div className="container mt-4">
+            <div className="container">
                 <h1>Mi reserva</h1>
                 <p>Todavía no has seleccionado servicios.</p>
                 <BotonEnlace ruta="/servicios" texto="Ver servicios" color="success" />
@@ -23,12 +23,13 @@ function Reserva({ items, alQuitar, alVaciar }: ReservaProps) {
     }
 
     return (
-        <div className="container mt-4">
+        <div className="container">
             <h1>Mi reserva</h1>
 
             <TablaReserva items={items} alQuitar={alQuitar} />
 
             <p className="h5">Total: {formatearPrecio(calcularTotal(items))}</p>
+            <p className="text-muted small">Para pagar debes iniciar sesión como paciente.</p>
 
             <BotonEnlace ruta="/pago" texto="Ir a pagar" color="success" />
             <Boton texto="Vaciar" color="secondary" alHacerClick={alVaciar} />

@@ -1,20 +1,20 @@
-import { buscarServicio } from "./servicios";
-
 export interface ItemReserva {
     codigo: string;
+    nombre: string;
+    precio: number;
     cantidad: number;
 }
 
-export function agregarItem(lista: ItemReserva[], codigo: string): ItemReserva[] {
-    const existe = lista.find(item => item.codigo === codigo);
+export function agregarItem(lista: ItemReserva[], servicio: { codigo: string; nombre: string; precio: number }): ItemReserva[] {
+    const existe = lista.find(item => item.codigo === servicio.codigo);
 
     if (existe === undefined) {
-        return [...lista, { codigo: codigo, cantidad: 1 }];
+        return [...lista, { codigo: servicio.codigo, nombre: servicio.nombre, precio: servicio.precio, cantidad: 1 }];
     }
 
     return lista.map(item => {
-        if (item.codigo === codigo) {
-            return { codigo: item.codigo, cantidad: item.cantidad + 1 };
+        if (item.codigo === servicio.codigo) {
+            return { ...item, cantidad: item.cantidad + 1 };
         }
         return item;
     });
@@ -38,12 +38,24 @@ export function calcularTotal(lista: ItemReserva[]): number {
     let total = 0;
 
     for (let i = 0; i < lista.length; i++) {
-        const servicio = buscarServicio(lista[i].codigo);
-
-        if (servicio !== undefined) {
-            total = total + servicio.precio * lista[i].cantidad;
-        }
+        total = total + lista[i].precio * lista[i].cantidad;
     }
 
     return total;
+}
+
+const CLAVE_RESERVA = "nutrivida-reserva";
+
+export function guardarReserva(lista: ItemReserva[]) {
+    localStorage.setItem(CLAVE_RESERVA, JSON.stringify(lista));
+}
+
+export function leerReserva(): ItemReserva[] {
+    const texto = localStorage.getItem(CLAVE_RESERVA);
+
+    if (texto === null) {
+        return [];
+    }
+
+    return JSON.parse(texto);
 }

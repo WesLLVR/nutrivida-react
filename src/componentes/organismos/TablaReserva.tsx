@@ -1,5 +1,5 @@
 import Boton from "../atomos/Boton";
-import { buscarServicio, formatearPrecio } from "../../datos/servicios";
+import { formatearPrecio } from "../../datos/servicios";
 import type { ItemReserva } from "../../datos/reserva";
 
 interface TablaProps {
@@ -10,7 +10,7 @@ interface TablaProps {
 function TablaReserva({ items, alQuitar }: TablaProps) {
     return (
         <div className="table-responsive">
-            <table className="table">
+            <table className="table align-middle">
                 <thead>
                     <tr>
                         <th>Servicio</th>
@@ -20,24 +20,20 @@ function TablaReserva({ items, alQuitar }: TablaProps) {
                     </tr>
                 </thead>
                 <tbody>
-                    {items.map(item => {
-                        const servicio = buscarServicio(item.codigo);
-
-                        return (
-                            <tr key={item.codigo}>
-                                <td>{servicio?.nombre}</td>
-                                <td>{formatearPrecio(servicio ? servicio.precio : 0)}</td>
-                                <td>{item.cantidad}</td>
-                                <td>
-                                    <Boton
-                                        texto="Quitar"
-                                        color="outline-danger"
-                                        alHacerClick={() => alQuitar(item.codigo)}
-                                    />
-                                </td>
-                            </tr>
-                        );
-                    })}
+                    {items.map(item => (
+                        <tr key={item.codigo}>
+                            <td>{item.nombre}</td>
+                            <td>{formatearPrecio(item.precio)}</td>
+                            <td>{item.cantidad}</td>
+                            <td>
+                                <Boton
+                                    texto="Quitar"
+                                    color="outline-danger"
+                                    alHacerClick={() => alQuitar(item.codigo)}
+                                />
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </div>

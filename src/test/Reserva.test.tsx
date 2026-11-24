@@ -10,7 +10,10 @@ test("muestra los servicios agregados y el total", () => {
     render(
         <MemoryRouter>
             <Reserva
-                items={[{ codigo: "CN001", cantidad: 2 }, { codigo: "TG001", cantidad: 1 }]}
+                items={[
+                    { codigo: "CN001", nombre: "Primera consulta nutricional", precio: 35000, cantidad: 2 },
+                    { codigo: "TG001", nombre: "Taller de alimentación saludable", precio: 15000, cantidad: 1 }
+                ]}
                 alQuitar={() => {}}
                 alVaciar={() => {}}
             />
