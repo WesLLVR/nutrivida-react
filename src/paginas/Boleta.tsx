@@ -1,5 +1,5 @@
 import BotonEnlace from "../componentes/atomos/BotonEnlace";
-import { formatearPrecio } from "../datos/servicios";
+import { formatearFecha, formatearPrecio } from "../datos/servicios";
 import type { Boleta as DatosBoleta } from "../datos/boletas";
 
 interface BoletaProps {
@@ -9,7 +9,7 @@ interface BoletaProps {
 function Boleta({ boleta }: BoletaProps) {
     if (boleta === null) {
         return (
-            <div className="container mt-4">
+            <div className="container">
                 <h1>Boleta</h1>
                 <p>Todavía no has realizado ninguna compra.</p>
                 <BotonEnlace ruta="/servicios" texto="Ver servicios" color="success" />
@@ -18,7 +18,7 @@ function Boleta({ boleta }: BoletaProps) {
     }
 
     return (
-        <div className="container mt-4">
+        <div className="container">
             <div className="row justify-content-center">
                 <div className="col-12 col-lg-8">
                     <div className="card p-4">
@@ -27,7 +27,7 @@ function Boleta({ boleta }: BoletaProps) {
                         <p className="text-muted">Documento ficticio de prueba, sin validez tributaria.</p>
 
                         <p className="mb-1"><strong>Clínica Nutricional NutriVida</strong> - Temuco</p>
-                        <p>Fecha: {boleta.fecha}</p>
+                        <p>Fecha: {formatearFecha(boleta.fecha)}</p>
 
                         <h2 className="h5">Cliente</h2>
                         <p className="mb-1">{boleta.cliente} - RUN {boleta.run}</p>
@@ -47,7 +47,7 @@ function Boleta({ boleta }: BoletaProps) {
                                 </thead>
                                 <tbody>
                                     {boleta.detalle.map(linea => (
-                                        <tr key={linea.nombre}>
+                                        <tr key={linea.codigo}>
                                             <td>{linea.nombre}</td>
                                             <td>{linea.cantidad}</td>
                                             <td>{formatearPrecio(linea.precio)}</td>
@@ -68,7 +68,8 @@ function Boleta({ boleta }: BoletaProps) {
                         </p>
 
                         <div>
-                            <BotonEnlace ruta="/" texto="Volver al inicio" color="success" />
+                            <BotonEnlace ruta="/mi-progreso" texto="Ver mis compras" color="success" />
+                            <BotonEnlace ruta="/" texto="Volver al inicio" color="outline-success" />
                         </div>
 
                     </div>

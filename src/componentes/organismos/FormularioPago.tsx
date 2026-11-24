@@ -139,7 +139,7 @@ function FormularioPago({ alPagar }: FormularioPagoProps) {
 
             <h2 className="h5 mt-2">Datos de la tarjeta</h2>
 
-            <div className="row">
+            <div className="row align-items-end">
                 <div className="col-12 col-md-6">
                     <CampoSelect etiqueta="Tipo de tarjeta" nombre="tipoTarjeta" valor={tipoTarjeta} opciones={["Crédito", "Débito"]} alCambiar={cambiarTipo} />
                 </div>

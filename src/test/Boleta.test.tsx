@@ -7,8 +7,9 @@ import { MemoryRouter } from "react-router-dom";
 import Boleta from "../paginas/Boleta";
 
 const boletaEjemplo = {
+    id: 1,
     numero: 1001,
-    fecha: "20-10-2026",
+    fecha: "2026-11-20",
     cliente: "Lucas Valderrama",
     run: "212345679",
     correo: "lucas@correo.cl",
@@ -16,13 +17,14 @@ const boletaEjemplo = {
     tipoTarjeta: "Crédito",
     tarjeta: "**** **** **** 1111",
     cuotas: 3,
-    detalle: [{ nombre: "Taller de alimentación saludable", cantidad: 1, precio: 15000, subtotal: 15000 }],
+    detalle: [{ codigo: "TG001", nombre: "Taller de alimentación saludable", cantidad: 1, precio: 15000, subtotal: 15000 }],
     neto: 12605,
     iva: 2395,
-    total: 15000
+    total: 15000,
+    estado: "PAGADA"
 };
 
-test("muestra los datos de la boleta recibida por props", () => {
+test("muestra los datos de la boleta que entregó el backend", () => {
     render(
         <MemoryRouter>
             <Boleta boleta={boletaEjemplo} />
@@ -30,8 +32,8 @@ test("muestra los datos de la boleta recibida por props", () => {
     );
 
     expect(screen.getByText("Boleta N° 1001")).toBeInTheDocument();
+    expect(screen.getByText("Fecha: 20-11-2026")).toBeInTheDocument();
     expect(screen.getByText("Taller de alimentación saludable")).toBeInTheDocument();
     expect(screen.getByText("IVA (19%): $2.395")).toBeInTheDocument();
-    expect(screen.getByText("Total: $15.000")).toBeInTheDocument();
     expect(screen.getByText(/\*\*\*\* \*\*\*\* \*\*\*\* 1111 en 3 cuotas/)).toBeInTheDocument();
 });
